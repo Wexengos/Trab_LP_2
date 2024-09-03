@@ -1,0 +1,1 @@
+("8.13" ta6nt ("faf62c72766a9b3f0f0c3c8a3a7f4ebd149097d7" . "881ff3f998701d8abd037033e57f975771be13a4") (collects #"dcc019" #"exercise" #"iclasses" #"lang" #"reader.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
