@@ -1,1 +1,1 @@
-("8.13" ta6nt ("b66dc07d6dd03e2f1e7dd2fb85650b9e45bd1f45" . "c4d46b8b365a065132733673c49c50b48c24e8cc") (collects #"dcc019" #"exercise" #"imp" #"lang" #"reader.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
+("8.10" ta6le ("04a779493716f149f388d5d046251da7c12b45d9" . "fb27b52ea084cef656bbebc50cfa17c964e38c9d") (collects #"dcc019" #"exercise" #"imp" #"lang" #"reader.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

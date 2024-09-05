@@ -1,1 +1,1 @@
-("8.13" ta6nt ("8b6715ef132a1b9b70d51a0e204d9217a732a1f2" . "f57b99c05702873da75a70dbaf5d10fe092a531d") (collects #"dcc019" #"let" #"lexer.rkt") (collects #"parser-tools" #"lex.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
+("8.10" ta6le ("11ff7b7e2da683f3eb22de73d0f9537098ce9332" . "81c882e9e32cc9cc7ed4955a1a81ae4959af66c8") (collects #"dcc019" #"let" #"lexer.rkt") (collects #"parser-tools" #"lex.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

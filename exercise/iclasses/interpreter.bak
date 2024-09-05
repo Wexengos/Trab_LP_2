@@ -6,6 +6,12 @@
 
 (provide value-of-program)
 
+(struct object (class_name fields))
+(struct class (class_super_name fields methods))
+(struct method (arguments body class_super_name fields))
+
+(define program_classes '())
+
 ; value-of :: Exp -> ExpVal
 (define (value-of exp Δ)
   (match exp
@@ -17,10 +23,27 @@
     [(ast:if e1 e2 e3) (if (value-of e1 Δ) (value-of e2 Δ) (value-of e3 Δ))]
     [(ast:var v) (apply-env Δ v)] ; esta implementação só funciona para variáveis imutáveis
     [(ast:let (ast:var x) e1 e2) (value-of e2 (extend-env x (value-of e1 Δ) Δ))]
-    [(ast:send e (ast:var mth) args) (display "send expression unimplemented")]
-    [(ast:super (ast:var c) args) (display "super expression unimplemented")]
-    [(ast:self) (display "self expression unimplemented")]
-    [(ast:new (ast:var c) args) (display "new expression unimplemented")]
+    [(ast:send obj (ast:var method) args)
+                (let* ([args_value (apply-value-of args Δ)]
+                      [obj (value-of obj Δ)])
+                      (apply_method (search_method (object-class_name obj) method) obj args_value)
+                )]
+    [(ast:super (ast:var c) args) (
+        let* ([args_value (apply-value-of args Δ)]
+              [obj (apply-env Δ "self")]
+              [super_name (apply-env Δ "super")]
+              [var (ast:var-name args)])
+              (apply_method ((search_method super_name var) obj args_value))
+
+    )]
+    [(ast:self) (apply-env Δ "self")]
+    [(ast:new (ast:var c) args) 
+      (let* (
+             [args_value (apply-value-of args Δ)]
+             [obj (new_object c args_value)])
+             (apply_method (search_method c "initialize") obj args_value)
+            object
+    )]
     [e (raise-user-error "unimplemented-construction: " e)]
     ))
 
@@ -31,21 +54,139 @@
     [(ast:print e) (display (value-of e Δ))
                    #;(display "print unimplemented")]
     [(ast:return e) (value-of e Δ)]
-    [(ast:block stmts) (display "block unimplemented")]
+    ; nó da AST do tipo blocos, que serão iterados para a interpretação;
+    [(ast:block insts) (for ([l insts])
+                             (result-of l Δ)
+                            )]
     [(ast:if-stmt e s1 s2) (display "if statment unimplemented")]
     [(ast:while e s) (display "while unimplemented")]
-    [(ast:local-decl (ast:var x) s) (display "local var declaration unimplemented")]
+    [(ast:local-decl (ast:var x) s)  (result-of s (extend-env x (newref 'empty) Δ))]
     [(ast:send e (ast:var mth) args) (display "command send unimplemented")]
     [(ast:super (ast:var c) args) (display "command super unimplemented")]
     [e (raise-user-error "unimplemented-construction: " e)]
     ))
+
+
+(define (apply-value-of exps Δ)
+  (map (lambda (exp) (value-of exp Δ)) exps))
+
+(define (search_method class_name method_name)
+    (let ([class (search_class class_name)])
+      (if class
+          (let ([methods (class-methods class)])
+            (for/or ([method methods])
+              (if (equal? method_name (car method))
+                  (raise-user-error "Método não econtrado" method_name)/))
+          )
+          #f
+      )
+    )
+)
+
+
+(define (apply_method method self args)
+  (let* ([args-refs (map newref args)]
+         [class_env (extend-env "self" self (extend-env "super" (method-class_super_name method) empty-env))]
+         [method_env (bind-vars (method-fields method) (object-fields self) class_env)]
+         [method_env_vars (bind-vars (method-arguments method) args-refs method_env)]
+          )
+    (result-of (method-body method) method_env_vars))
+)
+
+
+(define (new_object class_name value_args)
+  (let* ([name_fields (class-fields (search_class class_name))]  ; Recupera os nomes dos campos da classe
+         [fields (map newref value_args)]                             ; Cria uma lista de referências para os valores fornecidos
+        )
+    (object class_name fields)))                                       ; Cria e retorna o objeto com os campos inicializados
+
+
+
+(define (search_class_in_program class_name)
+  (if (null? program_classes)
+      #f
+      (for/or ([class_ program_classes])
+        (if (equal? class_name (car class_))
+            (cdr class_)
+            #f))
+  )
+)
+
+(define (search_class class_name)
+  (let ([class (search_class_in_program class_name)])
+    (if class
+        class
+        (raise-user-error "error => Classe não definida no escopo: " class_name)
+    )
+  )
+)
+
+(define (bind-vars vars values env)
+  (for ([var vars] [val values])
+    (set! env (extend-env var val env))
+  )
+  env
+)
+
+(define (add_class class-name classe)
+  (if (check_class? class-name classe)
+      (raise-user-error "error => Classe já definida no escopo: " class-name)
+      (set! program_classes (append program_classes (list (list class-name classe))))
+  )
+)
+
+
+;Função para checagem de uma classe já implementada
+(define (check_class? class-name classe)
+  (let ([result_class (get_class class-name)])
+      (and result_class
+        (equal? (class-methods result_class) (class-methods classe))
+        (equal? (class-fields result_class) (class-fields classe))
+      )
+  )
+)
+
+;Função para buscar as classes no programa
+(define (get_class class_name)
+  (if (null? program_classes)
+      #f
+      (for/or ([class_ program_classes])
+        (if (equal? class_name (car class_))
+            (cdr class_)
+            #f))
+  )
+)
+
+(define (define_methods methods class_super_name fields)
+  (append 
+    (map (lambda (method) (define_method method class_super_name fields)) methods)
+    (define_methods (get_class (class_super_name class_super_name))
+  )
+))
+
+(define (define_method method super_name fields)
+  (list 
+    (ast:var-name (ast:method-name method))
+    (method (ast:method-params method) (ast:method-body method) super_name fields)
+  )
+)
 
 (define (value-of-program prog)
   (empty-store)
   (match prog
     [(ast:prog decls stmt)
      (begin
-       ; you must collect all the classes declared and building its respectively environment
-       ; execute the prog expression in the correct environment
-       (result-of stmt init-env))]))
-
+       (append class "object" (class #f '() '()))
+       (for ([decl decls])
+         (let* (
+           [name (ast:var-name (ast:decl-name decl))]
+           [name_super (or (ast:var-name (ast:decl-super decl)) "object")] ; usa "object" como padrão para casos de decl-super == null ou #f
+           (_ (printf "Superclasse: ~a\n" name_super)) ; Depuração
+           [fields (append (class-fields (get_class name_super)) (map ast:var-name (ast:decl-fields decl)))]
+           [methods (define_methods (ast:decl-methods decl) name_super fields)]
+         )
+         (add_class (ast:var-name (ast:decl-name decl)) (class name_super fields methods))
+         )
+       )
+       (result-of stmt init-env))]
+))

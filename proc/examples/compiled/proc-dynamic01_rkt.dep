@@ -1,1 +1,1 @@
-("8.13" ta6nt ("66a356b37ca9e7b37526acf09075ed25ef7d90c6" . "670184f7dcfe4f92dcdd8700b0043b1dbd2430de") (collects #"dcc019" #"proc" #"dynamic.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
+("8.10" ta6le ("0f3c5bd128da96df969fa69e0ac5287e00868a58" . "e04afa8b76a52ca245a0aaf9b407a0195cec8be3") (collects #"dcc019" #"proc" #"dynamic.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
