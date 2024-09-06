@@ -41,12 +41,13 @@
      (let* ([args_value (apply-value-of args Δ)]
             [obj (value-of e Δ)])
        (apply_method (search_method (object-class_name obj) method-dcl) obj args_value))]
-    [(ast:super (ast:var c) args)
-     (let* ([args_value (apply-value-of args Δ)]
-            [obj (apply-env Δ "self")]
-            [super_name (apply-env Δ "super")]
-            [var (ast:var-name args)])
-       (apply_method ((search_method super_name var) obj args_value)))]
+   [(ast:super (ast:var method) args)
+ (let* ([args_value (apply-value-of args Δ)]    ; Avalia os argumentos
+        [obj (apply-env Δ "self")]              ; Obtém o objeto atual (self)
+        [super_name (apply-env Δ "super")]      ; Obtém o nome da superclasse
+        [method (search_method super_name (ast:var-name method))]) ; Procura o método na superclasse
+   (apply_method method obj args_value))]       ; Chama o método da superclasse com o objeto atual
+
     [(ast:self) (apply-env Δ "self")]
     [(ast:new (ast:var c) args)
      (let* ([args_value (apply-value-of args Δ)]
@@ -89,12 +90,14 @@
      (let* ([args_value (apply-value-of args Δ)]
             [obj (value-of e Δ)])
        (apply_method (search_method (object-class_name obj) method-dcl) obj args_value))]
-    [(ast:super (ast:var c) args)
-     (let* ([args_value (apply-value-of args Δ)]
-            [obj (apply-env Δ "self")]
-            [super_name (apply-env Δ "super")]
-            [var (ast:var-name args)])
-       (apply_method ((search_method super_name var) obj args_value)))]
+    [(ast:super (ast:var method) args)
+ (let* ([args_value (apply-value-of args Δ)]    ; Avalia os argumentos
+        [obj (apply-env Δ "self")]              ; Obtém o objeto atual (self)
+        [super_name (apply-env Δ "super")]      ; Obtém o nome da superclasse
+        [method (search_method super_name method)]) ; Procura o método na superclasse (sem ast:var-name)
+   (apply_method method obj args_value))]       ; Chama o método da superclasse com o objeto atual
+
+
     [e (raise-user-error "unimplemented-construction: " e)]))
 
 (define (apply-value-of exps Δ)
@@ -199,3 +202,11 @@
            (add_class name cls)))
        ; (printf "Processamento completo do programa!\n")  
        (result-of stmt init-env))]))
+
+;COLOCAR A EXPLICAÇÃO DO IMUTABILIDADE NO RELATA
+;Explicação:
+
+   ; z = 5, x = 4 (no escopo mais interno), e y = 2 foram usados para avaliar a expressão final.
+    ;-(z, -(x, y)) é avaliado em duas partes: primeiro -(x, y) = 2, depois -(z, 2) = 3.
+
+;Portanto, o resultado da expressão que será retornado pelo print é 3.
